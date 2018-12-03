@@ -3,7 +3,6 @@ package sudoku
 import (
 	"fmt"
 	"github.com/henrylee2cn/faygo"
-	"log"
 	"math/rand"
 )
 
@@ -128,8 +127,8 @@ func (s *SudokuData) createFirstLine() {
 	for i := 0; i < 9; i++ {
 		s.Data[0][i] += first[i] + 1
 	}
-	fmt.Printf("first %+v\n", s.Data[0])
-	//s.Data[0] = [9]int{1,6,7,3,5,2,8,9,4}
+	//fmt.Printf("first %+v\n", s.Data[0])
+
 }
 
 func (s *SudokuData) PrintCurrent(i int) {
@@ -144,22 +143,29 @@ func (s *SudokuData) PrintCurrent(i int) {
 func (s *SudokuData) Create() {
 	s.createFirstLine()
 	for i := 1; i < 9; i++ {
-		count := 0
+		firstError, count := 0, 0
+
 		for j := 0; j < 9; {
 			index := i*9 + j
 			s.countMutexSlice(i, j) //计算互斥数据
 			if len(s.TryNum[index])+len(s.MutexNum[index]) >= 9 {
+				if firstError > 0 {
+					if index > firstError {
+						firstError = index
+						count = 1
+					}
+				} else {
+					firstError = index
+					count++
+				}
 
-				//在该行错误的次数
-				count++
-
-				fmt.Printf("{%d,%d} mutex %+v try %+v\n", i, j,
-					s.MutexNum[index], s.TryNum[index])
+				/*fmt.Printf("{%d,%d} mutex %+v try %+v\n", i, j,
+				s.MutexNum[index], s.TryNum[index])*/
 
 				//遍历到此处，发现已经无法填值了
 				s.clearTmpNums(i, j)
 
-				s.PrintCurrent(i) //打印当前数据
+				//s.PrintCurrent(i) //打印当前数据
 
 				//是否要回到上一行
 				if j-count < 0 {
@@ -167,15 +173,15 @@ func (s *SudokuData) Create() {
 						s.clearTmpNums(i, k)
 					}
 					i--
-					j = 8
-					break
+					j = 7
+
 				} else {
 					for k := 0; k < count; k++ {
 						s.clearTmpNums(i, k)
+						j--
 					}
-					j--
-					continue
 				}
+				continue
 			} else {
 				num := s.getNumber(i, j) //取新数据
 				if num == 0 {
@@ -183,7 +189,7 @@ func (s *SudokuData) Create() {
 				}
 				s.Data[i][j] = num //赋值
 				s.addTryNum(i, j, num)
-				log.Printf("index[%d] {%d,%d} %+v, %+v num[%d]", i*9+j, i, j, s.MutexNum[index], s.TryNum[index], num)
+				//log.Printf("index[%d] {%d,%d} %+v, %+v num[%d]", i*9+j, i, j, s.MutexNum[index], s.TryNum[index], num)
 				j++
 			}
 		}
@@ -210,15 +216,24 @@ func (s *SudokuData) clearTmpNums(i, j int) {
 	s.MutexNum[index] = nil
 	s.TryNum[index] = nil
 	//s.Data[i][j] = 0
-	fmt.Printf("clear {%d,%d} len(mutex[%d])=%d len(tryNum[%d])=%d\n",
-		i, j, index, len(s.MutexNum[index]), index, len(s.TryNum[index]))
+	/*fmt.Printf("clear {%d,%d} len(mutex[%d])=%d len(tryNum[%d])=%d\n",
+	i, j, index, len(s.MutexNum[index]), index, len(s.TryNum[index]))*/
 }
 
 //检查该位置是否合法
 func (s *SudokuData) SimpleCheck() bool {
 	for i := 0; i < 9; i++ {
 		for j := 0; j < 9; j++ {
-
+			for x := 0; x < 9; x++ {
+				if x != i && s.Data[i][j] == s.Data[x][j] {
+					return false
+				}
+			}
+			for y := 0; y < 0; y++ {
+				if y != j && s.Data[i][j] == s.Data[i][y] {
+					return false
+				}
+			}
 		}
 	}
 	return true
