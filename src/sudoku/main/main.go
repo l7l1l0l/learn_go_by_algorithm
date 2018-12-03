@@ -6,6 +6,8 @@ import (
 
 func main() {
 	s := sudoku.SudokuData{}
+
 	s.Create()
-	s.Print()
+
+	s.SimpleCheck()
 }
